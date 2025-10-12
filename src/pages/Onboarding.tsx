@@ -29,7 +29,7 @@ const Onboarding = () => {
     if (currentStep < onboardingData.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      navigate("/login");
+      navigate("/auth");
     }
   };
 

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Splash from "./pages/Splash";
 import Onboarding from "./pages/Onboarding";
-import Login from "./pages/Login";
+import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import SOS from "./pages/SOS";
 import Admin from "./pages/Admin";
@@ -23,7 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Splash />} />
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/sos" element={<SOS />} />
           <Route path="/admin" element={<Admin />} />
