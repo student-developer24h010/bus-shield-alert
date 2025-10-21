@@ -7,6 +7,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bus, Shield, MapPin, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { z } from "zod";
+
+// Validation schemas
+const signupSchema = z.object({
+  email: z.string().email("Invalid email address").max(255, "Email too long"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password too long"),
+  fullName: z.string().trim().min(1, "Name is required").max(100, "Name too long").regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
+  phone: z.string().regex(/^\+?[1-9]\d{9,14}$/, "Invalid phone number format").optional().or(z.literal(""))
+});
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address").max(255, "Email too long"),
+  password: z.string().min(1, "Password is required").max(128, "Password too long")
+});
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -56,23 +70,41 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Validate inputs
+      const validationResult = signupSchema.safeParse({
         email,
         password,
+        fullName,
+        phone
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast.error(firstError.message);
+        setLoading(false);
+        return;
+      }
+
+      const redirectUrl = `${window.location.origin}/`;
+      const { error } = await supabase.auth.signUp({
+        email: validationResult.data.email,
+        password: validationResult.data.password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName,
-            phone: phone,
+            full_name: validationResult.data.fullName,
+            phone: validationResult.data.phone || null,
           },
-          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
-      if (error) throw error;
-
-      toast.success("Account created successfully! You can now log in.");
-      setIsLogin(true);
-      setPassword("");
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Account created successfully! You can now log in.");
+        setIsLogin(true);
+        setPassword("");
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up");
     } finally {
@@ -85,12 +117,27 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // Validate inputs
+      const validationResult = loginSchema.safeParse({
         email,
-        password,
+        password
       });
 
-      if (error) throw error;
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast.error(firstError.message);
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: validationResult.data.email,
+        password: validationResult.data.password,
+      });
+
+      if (error) {
+        toast.error(error.message);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to log in");
     } finally {
